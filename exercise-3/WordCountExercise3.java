@@ -43,7 +43,7 @@ public class WordCountExercise3 {
 		}
     }
  } 
- public static int c=0;      
+ public static int count=0;      
  public static class Reduce extends Reducer<Text, IntWritable, Text, IntWritable> {
 
     public void reduce(Text key, Iterable<IntWritable> values, Context context) 
@@ -52,7 +52,7 @@ public class WordCountExercise3 {
         for (IntWritable val : values) {
             sum += val.get();
         }
-        c=c+1;
+        count=count+1;
         context.write(key, new IntWritable(sum));
     }
  }
@@ -61,13 +61,13 @@ public class WordCountExercise3 {
 
     public void reduce(IntWritable key, Iterable<Text> values, Context context) 
       throws IOException, InterruptedException {
-        for (Text val : values) {
-			
-		if(c<101){	            
-        context.write(val,key);
-		}
-        c--;
+        for (Text val : values) {	
+			if(count<101){	            
+        		context.write(val,key);
+			}
+        	count--;
         }
+        
         
     }
  }
