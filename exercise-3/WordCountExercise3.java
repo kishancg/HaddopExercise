@@ -19,17 +19,31 @@ public class WordCountExercise3 {
     public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         String line = value.toString();
         StringTokenizer tokenizer = new StringTokenizer(line);
-        String word_str;
-        while (tokenizer.hasMoreTokens()) {
-            word_str=tokenizer.nextToken();
+        while (tokenizer.hasMoreTokens()) {   
+	    
+            String word_str =tokenizer.nextToken();
             if(word_str.length()==7){
-            	word.set(word_str);
-	    		context.write(word, one);
-	    	}
+            word.set(word_str);
+            context.write(word, one);
+	    }
         }
     }
+ }
+ 
+
+ 
+ public static class Map1 extends Mapper<LongWritable, Text, IntWritable,Text> {
+    private Text word = new Text();        
+    public void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
+        String line = value.toString();
+        String []word_arr = line.split("\\s+");
+        if(word_arr.length>=2){
+			word.set(word_arr[0]);
+			context.write(new IntWritable(Integer.valueOf(word_arr[1])), word);
+		}
+    }
  } 
-        
+ public static int c=0;      
  public static class Reduce extends Reducer<Text, IntWritable, Text, IntWritable> {
 
     public void reduce(Text key, Iterable<IntWritable> values, Context context) 
@@ -38,14 +52,31 @@ public class WordCountExercise3 {
         for (IntWritable val : values) {
             sum += val.get();
         }
+        c=c+1;
         context.write(key, new IntWritable(sum));
     }
  }
+ 
+ public static class Reduce1 extends Reducer< IntWritable,Text, Text,IntWritable> {
+
+    public void reduce(IntWritable key, Iterable<Text> values, Context context) 
+      throws IOException, InterruptedException {
+        for (Text val : values) {
+			
+		if(c<101){	            
+        context.write(val,key);
+		}
+        c--;
+        }
+        
+    }
+ }
+   
         
  public static void main(String[] args) throws Exception {
     Configuration conf = new Configuration();
         
-        Job job = new Job(conf, "wordcount");
+    Job job = new Job(conf, "wordcountexercise3");
     
     job.setOutputKeyClass(Text.class);
     job.setOutputValueClass(IntWritable.class);
@@ -60,9 +91,29 @@ public class WordCountExercise3 {
     job.setJarByClass(WordCountExercise3.class);
         
     FileInputFormat.addInputPath(job, new Path(args[0]));
-    FileOutputFormat.setOutputPath(job, new Path(args[1]));
-        
+    Path out_path = new Path(args[1]);
+    FileOutputFormat.setOutputPath(job, out_path);         
+    
     job.waitForCompletion(true);
+    Configuration conf1 = new Configuration();
+    
+    Job job1 = new Job(conf1, "wordcountexercise3");
+    
+    job1.setOutputKeyClass(IntWritable.class);
+    job1.setOutputValueClass(Text.class);
+        
+    job1.setMapperClass(Map1.class);
+    job1.setReducerClass(Reduce1.class);
+        
+    job1.setInputFormatClass(TextInputFormat.class);
+    job1.setOutputFormatClass(TextOutputFormat.class);
+
+    job1.setNumReduceTasks(1);
+    job1.setJarByClass(WordCountExercise3.class);
+        
+    FileInputFormat.addInputPath(job1, out_path);
+    FileOutputFormat.setOutputPath(job1, new Path(args[2]));
+    job1.waitForCompletion(true);
  }
         
 }
